@@ -1,0 +1,30 @@
+syntax = "proto3";
+package tutorial;
+import "google/protobuf/timestamp.proto";
+
+option go_package = "/schemas";
+
+message Machine {
+  int32 id = 1;
+  string name = 2;
+  string serialNumber = 3;
+  int32 lineId = 4;
+  google.protobuf.Timestamp lastServicedAt = 5;
+  google.protobuf.Timestamp installedAt = 6;
+}
+
+message ProductionLine {
+  string name = 1;
+  string factory = 2;
+  string zone = 3;
+  repeated Machine machines = 4;
+}
+
+message GetInventoryRequest {
+  string detail = 1;
+}
+
+message GetInventoryResponse {
+  string type = 1;
+  repeated ProductionLine lines = 2;
+}

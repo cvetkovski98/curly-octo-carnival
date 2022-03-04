@@ -1,0 +1,77 @@
+version: "3.9"
+services:
+  nats-cloud-cluster:
+    image: nats
+    command: "--name NATS_CLOUD -c /app/cluster.conf"
+    volumes:
+      - ./factory-cloud/cluster.conf:/app/cluster.conf
+    networks:
+      - nats_default
+    ports:
+      - "8222:8222"
+  node-cloud:
+    build:
+      context: .
+      dockerfile: cloud.Dockerfile
+    depends_on:
+      - node-cloud-cluster
+    ports:
+      - "8080:8080"
+    command:
+      - "./factory-cloud"
+      - "--cluster=nats://go:secret@nats-cloud-cluster:4222"
+      - "--subject=msg.wheels"
+    networks:
+      - nats_default
+
+  nats-node-cluster-wheels:
+    image: nats
+    depends_on:
+      - nats-cloud-cluster
+    command: "--name NATS_WHEELS -c /app/cluster.conf"
+    networks:
+      - nats_default
+    volumes:
+      - ./factory-node/cluster.conf:/app/cluster.conf
+  node-wheels:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    depends_on:
+      - nats-node-cluster-wheels
+    command:
+      - "./factory-node"
+      - "--cluster=nats://oliver:secret@nats-node-cluster-wheels:4222"
+      - "--publicSubject=msg.public.wheels"
+      - "--privateSubject=msg.wheels"
+      - "--service=wheels"
+    networks:
+      - nats_default
+
+  nats-node-cluster-pcb:
+    image: nats
+    depends_on:
+      - nats-cloud-cluster
+    command: "--name NATS_PCB -c /app/cluster.conf"
+    networks:
+      - nats_default
+    volumes:
+      - ./factory-node/cluster.conf:/app/cluster.conf
+  node-pcb:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    depends_on:
+      - nats-node-cluster-pcb
+    command:
+      - "./factory-node"
+      - "--cluster=nats://oliver:secret@nats-node-cluster-pcb:4222"
+      - "--publicSubject=msg.public.wheels"
+      - "--privateSubject=msg.wheels"
+      - "--service=pcb"
+    networks:
+      - nats_default
+
+networks:
+  nats_default:
+    name: nats_default

@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  mqtt:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./password.txt:/mosquitto/config/password.txt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - mqtt
+
+  producer:
+    build:
+      context: .
+      dockerfile: simulate.Dockerfile
+    depends_on:
+      - mqtt
+    networks:
+      - mqtt
+
+networks:
+  mqtt:
+    driver: bridge
